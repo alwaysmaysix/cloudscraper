@@ -37,7 +37,7 @@ for line in lines:
                     uploader_name = uploader_name.replace('/kc/channel/', '')
                 if '/' in uploader_name:
                     uploader_name = uploader_name.replace('/', '')
-
+                
                 # Store the uploader name in a variable
                 print("Uploader name:", uploader_name)
                 if uploader_name:
@@ -63,20 +63,19 @@ for line in lines:
         if "720p.mp4" in video_url:
             video_url_1080p = video_url.replace("720p.mp4", "1080p.mp4")
             video_url_720p = video_url
-            
         if "480p.mp4" in video_url:
             video_url_1080p = video_url.replace("480p.mp4", "1080p.mp4")
             video_url_720p = video_url.replace("480p.mp4", "720p.mp4")
 
+        #if 1080p is available
         if requests.head(video_url_1080p).status_code != 404:
             video_url = video_url_1080p
-            
+
         #if not, go down to 720p
         if requests.head(video_url_720p).status_code != 404:
             video_url = video_url_720p
             print(video_url)
         print("Video URL:", video_url)
-        
     else:
         print("Failed to find the source tag.")
 
@@ -86,12 +85,23 @@ for line in lines:
         video_title_text = video_title_tag.text
         video_title_text, _, _ = video_title_text.rpartition('-')
         image_title_text, _, _ = video_title_text.rpartition('-')
-        
         #remove trailing space
         video_title_text = video_title_text.rstrip()
         video_title_text = video_title_text.replace("Watch ", "", 1)
-
+        
         image_title_text = image_title_text.rstrip()
+        image_title_text = image_title_text.replace("Watch ", "", 1)
+        image_title_text = image_title_text.replace(": ", " ", 1)
+        image_title_text = image_title_text.replace(" :", " ", 1)
+        image_title_text = image_title_text.replace(":", "", 1)
+        image_title_text = image_title_text.replace("/", "-", 1)
+        image_title_text = image_title_text.replace("?", "-", 1)
+        image_title_text = image_title_text.replace("|", "-", 1)
+        image_title_text = image_title_text.replace("<", "-", 1)
+        image_title_text = image_title_text.replace(">", "-", 1)
+        image_title_text = image_title_text.replace("*", "", 1)
+        image_title_text = image_title_text.replace("\\", "", 1)
+        image_title_text = image_title_text.replace("\"", "", 1)
         
         print(video_title_text)
     else:
