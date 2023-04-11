@@ -11,6 +11,8 @@
 # Installation
 
 Clone this repository and run `python setup.py install`.
+Then `pip install bs4`
+Then `pip install tqdm`
 
 # Dependencies
 
