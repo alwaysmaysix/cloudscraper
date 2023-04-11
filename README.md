@@ -10,7 +10,7 @@
 
 # Installation
 
-Alternatively, clone this repository and run `python setup.py install`.
+Clone this repository and run `python setup.py install`.
 
 # Dependencies
 
