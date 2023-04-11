@@ -1,5 +1,5 @@
 import cloudscraper
-import requests
+#import requests
 from bs4 import BeautifulSoup
 import time
 from tqdm import tqdm
@@ -130,18 +130,18 @@ for line in lines:
             video_url_320p = video_url.replace("240p.mp4", "320p.mp4")
             video_url_240p = video_url
         #if 4k is available
-        if requests.head(video_url_4k).status_code != 404:
+        if scraper.head(video_url_4k).status_code != 404:
             video_url = video_url_4k
-        elif requests.head(video_url_1080p).status_code != 404:
+        elif scraper.head(video_url_1080p).status_code != 404:
             video_url = video_url_1080p
         #if not, go down to 720p
-        elif requests.head(video_url_720p).status_code != 404:
+        elif scraper.head(video_url_720p).status_code != 404:
             video_url = video_url_720p
-        elif requests.head(video_url_480p).status_code != 404:
+        elif scraper.head(video_url_480p).status_code != 404:
             video_url = video_url_480p
-        elif requests.head(video_url_320p).status_code != 404:
+        elif scraper.head(video_url_320p).status_code != 404:
             video_url = video_url_320p
-        elif requests.head(video_url_240p).status_code != 404:
+        elif scraper.head(video_url_240p).status_code != 404:
             print("240p :(")
             video_url = video_url_240p
         print("Video URL:", video_url)
@@ -200,7 +200,7 @@ for line in lines:
     img_url = img_tag['src'].replace('w:300', 'w:1600')
 
 
-    img_response = requests.get(img_url)
+    img_response = scraper.get(img_url)
 
     # Check if the request was successful
     if img_response.status_code == 200:
@@ -214,14 +214,21 @@ for line in lines:
 
 
     #dl vid
-    response = requests.get(video_url, stream=True)
+    response = scraper.get(video_url, stream=True)
 
     total_size = int(response.headers.get('Content-Length', 0))
 
     # Check if the request was successful
     if response.status_code == 200:
+        counter = 1
+        base_filename = f'{uploader_name} - {video_title_text}'
+        # Check if the file already exists and increment until a unique name is found
+        video_filename = f'{base_filename}.mp4'
+        while os.path.exists(video_filename):
+            video_filename = f'{base_filename} ({counter}).mp4'
+            counter += 1
         # Save the video to a file
-        with open(f'{uploader_name} - {video_title_text}.mp4', 'wb') as f:
+        with open(video_filename, 'wb') as f:
             with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading video") as pbar:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
