@@ -114,16 +114,16 @@ for line in lines:
         video_url = source_tag['src']
         if "720p.mp4" in video_url:
             #print("720p found in URL...")
+            video_url_4k = video_url.replace("720p.mp4", "4k.mp4")
             video_url_1080p = video_url.replace("720p.mp4", "1080p.mp4")
             #print("1080p URL: " + video_url_1080p)
             video_url_720p = video_url
             #print("720p URL: " + video_url_720p)
         if "480p.mp4" in video_url:
             #print("480p found in URL...")
+            video_url_4k = video_url.replace("480p.mp4", "4k.mp4")
             video_url_1080p = video_url.replace("480p.mp4", "1080p.mp4")
-            #print("1080p URL: " + video_url_1080p)
             video_url_720p = video_url.replace("480p.mp4", "720p.mp4")
-            #print("720p URL: " + video_url_720p)
             video_url_480p = video_url
         if "320p.mp4" in video_url:
             print("320 in url..........")
@@ -137,8 +137,10 @@ for line in lines:
             video_url_480p = video_url.replace("240p.mp4", "480p.mp4")
             video_url_320p = video_url.replace("240p.mp4", "320p.mp4")
             video_url_240p = video_url
-        #if 1080p is available
-        if requests.head(video_url_1080p).status_code != 404:
+        #if 4k is available
+        if requests.head(video_url_4k).status_code != 404:
+            video_url = video_url_4k
+        elif requests.head(video_url_1080p).status_code != 404:
             #print("1080p exists...")
             video_url = video_url_1080p
         #if not, go down to 720p
