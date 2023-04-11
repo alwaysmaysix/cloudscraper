@@ -172,7 +172,7 @@ for line in lines:
         image_title_text = image_title_text.replace("*", "")
         image_title_text = image_title_text.replace("\\", "")
         image_title_text = image_title_text.replace("\"", "")
-        
+        image_title_text = image_title_text[:127]
         video_title_text = video_title_text.rstrip()
         video_title_text = video_title_text.replace("Watch ", "")
         video_title_text = video_title_text.replace(": ", " ")
@@ -186,6 +186,7 @@ for line in lines:
         video_title_text = video_title_text.replace("*", "")
         video_title_text = video_title_text.replace("\\", "")
         video_title_text = video_title_text.replace("\"", "")
+        video_title_text = video_title_text[:127]
         if video_title_text != 'Free Porn Videos and Movies':
             print(video_title_text)
         else:
