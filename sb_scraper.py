@@ -56,10 +56,6 @@ for line in lines:
 
 lines = [line for line in lines if line not in al_dl_urls]
 
-with open(already_dl_path, 'a') as al_dl_file:
-    for line in lines:
-        al_dl_file.write(line)
-
 for line in lines:
     line = line.strip()
     line_num+=1
@@ -113,14 +109,10 @@ for line in lines:
         # Get the video URL from the source tag
         video_url = source_tag['src']
         if "720p.mp4" in video_url:
-            #print("720p found in URL...")
             video_url_4k = video_url.replace("720p.mp4", "4k.mp4")
             video_url_1080p = video_url.replace("720p.mp4", "1080p.mp4")
-            #print("1080p URL: " + video_url_1080p)
             video_url_720p = video_url
-            #print("720p URL: " + video_url_720p)
         if "480p.mp4" in video_url:
-            #print("480p found in URL...")
             video_url_4k = video_url.replace("480p.mp4", "4k.mp4")
             video_url_1080p = video_url.replace("480p.mp4", "1080p.mp4")
             video_url_720p = video_url.replace("480p.mp4", "720p.mp4")
@@ -141,7 +133,6 @@ for line in lines:
         if requests.head(video_url_4k).status_code != 404:
             video_url = video_url_4k
         elif requests.head(video_url_1080p).status_code != 404:
-            #print("1080p exists...")
             video_url = video_url_1080p
         #if not, go down to 720p
         elif requests.head(video_url_720p).status_code != 404:
@@ -169,25 +160,38 @@ for line in lines:
         video_title_text = video_title_text.replace("Watch ", "", 1)
         
         image_title_text = image_title_text.rstrip()
-        image_title_text = image_title_text.replace("Watch ", "", 1)
-        image_title_text = image_title_text.replace(": ", " ", 1)
-        image_title_text = image_title_text.replace(" :", " ", 1)
-        image_title_text = image_title_text.replace(":", "", 1)
-        image_title_text = image_title_text.replace("/", "-", 1)
-        image_title_text = image_title_text.replace("?", "-", 1)
-        image_title_text = image_title_text.replace("|", "-", 1)
-        image_title_text = image_title_text.replace("<", "-", 1)
-        image_title_text = image_title_text.replace(">", "-", 1)
-        image_title_text = image_title_text.replace("*", "", 1)
-        image_title_text = image_title_text.replace("\\", "", 1)
-        image_title_text = image_title_text.replace("\"", "", 1)
+        image_title_text = image_title_text.replace("Watch ", "")
+        image_title_text = image_title_text.replace(": ", " ")
+        image_title_text = image_title_text.replace(" :", " ")
+        image_title_text = image_title_text.replace(":", "")
+        image_title_text = image_title_text.replace("/", "-")
+        image_title_text = image_title_text.replace("?", "-")
+        image_title_text = image_title_text.replace("|", "-")
+        image_title_text = image_title_text.replace("<", "-")
+        image_title_text = image_title_text.replace(">", "-")
+        image_title_text = image_title_text.replace("*", "")
+        image_title_text = image_title_text.replace("\\", "")
+        image_title_text = image_title_text.replace("\"", "")
+        
+        video_title_text = video_title_text.rstrip()
+        video_title_text = video_title_text.replace("Watch ", "")
+        video_title_text = video_title_text.replace(": ", " ")
+        video_title_text = video_title_text.replace(" :", " ")
+        video_title_text = video_title_text.replace(":", "")
+        video_title_text = video_title_text.replace("/", "-")
+        video_title_text = video_title_text.replace("?", "-")
+        video_title_text = video_title_text.replace("|", "-")
+        video_title_text = video_title_text.replace("<", "-")
+        video_title_text = video_title_text.replace(">", "-")
+        video_title_text = video_title_text.replace("*", "")
+        video_title_text = video_title_text.replace("\\", "")
+        video_title_text = video_title_text.replace("\"", "")
         if video_title_text != 'Free Porn Videos and Movies':
             print(video_title_text)
         else:
             print('Failed to find title.')
     else:
         print("Failed to find title.")
-
 
 
 
@@ -201,6 +205,7 @@ for line in lines:
     # Check if the request was successful
     if img_response.status_code == 200:
         # Save the image to a file
+        
         with open(f'{uploader_name} - {image_title_text}.jpg', 'wb') as f:
             f.write(img_response.content)
             print("Image downloaded successfully.")
@@ -222,4 +227,6 @@ for line in lines:
                     f.write(chunk)
                     # Update the progress bar
                     pbar.update(len(chunk))
+        with open(already_dl_path, 'a') as al_dl_file:
+            al_dl_file.write('\n' + line)
         print("Video downloaded successfully.")
