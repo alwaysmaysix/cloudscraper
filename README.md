@@ -1,4 +1,4 @@
-# cloudscraper
+# SpankBang Downloader
 
 [![PyPI version](https://badge.fury.io/py/cloudscraper.svg)](https://badge.fury.io/py/cloudscraper)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -18,6 +18,12 @@ Alternatively, clone this repository and run `python setup.py install`.
 - **[Requests](https://github.com/kennethreitz/requests)** >= 2.9.2
 - **[requests_toolbelt](https://pypi.org/project/requests-toolbelt/)** >= 0.9.1
 
-`python setup.py install` will install the Python dependencies automatically. The javascript interpreters and/or engines you decide to use are the only things you need to install yourself, excluding js2py which is part of the requirements as the default.
+`python setup.py install` will install the Python dependencies automatically.
 
 Any requests made from this session object to websites protected by Cloudflare anti-bot will be handled automatically. You can effectively treat SpankBang as if it is not protected with anything.
+
+# Usage
+1. Install Python 3
+2. Clone this repository
+3. Run setup.py
+4. Take input.txt and sb_scraper.py do any directory you want and use it
