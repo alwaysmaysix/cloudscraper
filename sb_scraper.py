@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import time
 from tqdm import tqdm
 import os
+import re
 
 config_path = 'config.txt'
 if not os.path.exists(config_path):
@@ -80,13 +81,15 @@ for line in lines:
 
             if a_tag and 'href' in a_tag.attrs:
                 # Extract the uploader name from the href attribute
-                uploader_name = a_tag['href'].replace('/profile/', '')
-                if '/kc/channel/' in uploader_name:
-                    uploader_name = uploader_name.replace('/kc/channel/', '')
+                uploader_name = a_tag['href'].replace('/profile/', '') #/profile/ is in basic user names
                 if '/' in uploader_name:
                     uploader_name = uploader_name.replace('/', '')
-                
-                uploader_name = uploader_name.replace("khchannel", "")
+                    
+                #remove the string "channel" from uploader's name
+                if "channel" in uploader_name and "mychannel" not in uploader_name:
+                    index = uploader_name.find("channel")
+                    if index == 2:
+                        uploader_name = uploader_name.replace(uploader_name[:index + len("channel")], "")
                 print("Uploader name:", uploader_name)
                 if uploader_name:
                     break
@@ -205,9 +208,16 @@ for line in lines:
 
     # Check if the request was successful
     if img_response.status_code == 200:
-        # Save the image to a file
+        in_counter = 1 #image number counter
+
+        base_image_filename = f'{uploader_name} - {image_title_text}'
         
-        with open(f'{uploader_name} - {image_title_text}.jpg', 'wb') as f:
+        image_filename = f'{base_image_filename}.jpg'
+        # Check if the file already exists and increment
+        while os.path.exists(image_filename):
+            image_filename = f'{base_image_filename} ({in_counter}).jpg'
+            in_counter += 1
+        with open(f'{image_filename}.jpg', 'wb') as f:
             f.write(img_response.content)
             print("Image downloaded successfully.")
     else:
