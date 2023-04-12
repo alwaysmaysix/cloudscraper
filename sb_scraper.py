@@ -86,7 +86,7 @@ for line in lines:
                 if '/' in uploader_name:
                     uploader_name = uploader_name.replace('/', '')
                 
-                # Store the uploader name in a variable
+                uploader_name = uploader_name.replace("khchannel", "")
                 print("Uploader name:", uploader_name)
                 if uploader_name:
                     break
