@@ -217,7 +217,7 @@ for line in lines:
         while os.path.exists(image_filename):
             image_filename = f'{base_image_filename} ({in_counter}).jpg'
             in_counter += 1
-        with open(f'{image_filename}.jpg', 'wb') as f:
+        with open(image_filename, 'wb') as f:
             f.write(img_response.content)
             print("Image downloaded successfully.")
     else:
