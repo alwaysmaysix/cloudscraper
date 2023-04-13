@@ -107,7 +107,7 @@ for line in lines:
     # Find the video tag with the id "main_video_player" and get the source tag within it
     video_tag = soup.find('video', {'id': 'main_video_player'})
     source_tag = video_tag.find('source') if video_tag else None
-
+    fk_possible = True
     if source_tag:
         # Get the video URL from the source tag
         video_url = source_tag['src']
@@ -121,19 +121,20 @@ for line in lines:
             video_url_720p = video_url.replace("480p.mp4", "720p.mp4")
             video_url_480p = video_url
         if "320p.mp4" in video_url:
-            print("320 in url..........")
+            fk_possible = False
             video_url_1080p = video_url.replace("320p.mp4", "1080p.mp4")
             video_url_720p = video_url.replace("320p.mp4", "720p.mp4")
             video_url_480p = video_url.replace("320p.mp4", "480p.mp4")
             video_url_320p = video_url
         if "240p.mp4" in video_url:
+            fk_possible = False
             video_url_1080p = video_url.replace("240p.mp4", "1080p.mp4")
             video_url_720p = video_url.replace("240p.mp4", "720p.mp4")
             video_url_480p = video_url.replace("240p.mp4", "480p.mp4")
             video_url_320p = video_url.replace("240p.mp4", "320p.mp4")
             video_url_240p = video_url
         #if 4k is available
-        if scraper.head(video_url_4k).status_code != 404:
+        if fk_possible == True and scraper.head(video_url_4k).status_code != 404:
             video_url = video_url_4k
         elif scraper.head(video_url_1080p).status_code != 404:
             video_url = video_url_1080p
