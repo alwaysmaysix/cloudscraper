@@ -14,11 +14,13 @@ if not os.path.exists(config_path):
 
     # Set the config_path to the new location
     config_path = os.path.join(folder_path, 'config.txt')
-
+    
     # Create the config file with the default content
     with open(config_path, 'w') as config_file:
         config_file.write("ALREADY_DL_TXT: %APPDATA%\\CB_DL\\already_dl.txt")
 
+# Set the path for failed_dl.txt in the current directory
+failed_dl_path = 'failed_dl.txt'
 
 # Read the config.txt file and get the path to already_dl.txt
 
@@ -52,10 +54,10 @@ with open("input.txt", "r") as input_file:
     lines = input_file.readlines()
     
 for line in lines:
-    if line in al_dl_urls:
+    if any(line[:32] == url[:32] for url in al_dl_urls):
         print(f"The URL {line.strip()} already exists in already_dl.txt")
 
-lines = [line for line in lines if line not in al_dl_urls]
+lines = [line for line in lines if not any(line[:32] == url[:32] for url in al_dl_urls)]
 
 for line in lines:
     line = line.strip()
@@ -250,6 +252,18 @@ for line in lines:
                     f.write(chunk)
                     # Update the progress bar
                     pbar.update(len(chunk))
-        with open(already_dl_path, 'a') as al_dl_file:
-            al_dl_file.write('\n' + line)
-        print("Video downloaded successfully.")
+
+        # Verify if the download reached 100%
+        if pbar.n == total_size:
+            print(f'Video downloaded successfully.' )
+            with open(already_dl_path, 'a') as al_dl_file:
+                al_dl_file.write('\n' + line)
+        else:
+            # Create failed_dl.txt in the current directory if it doesn't exist
+            if not os.path.exists(failed_dl_path):
+                with open(failed_dl_path, 'w') as failed_dl_file:
+                    pass
+    
+            print(f'Download incomplete. pbar: {pbar.n} total_size: {total_size}')
+            with open(failed_dl_path, 'a') as failed_dl_file:
+                failed_dl_file.write('\n' + line)
