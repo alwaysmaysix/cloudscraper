@@ -53,6 +53,9 @@ line_num = 0
 with open("input.txt", "r") as input_file:
     lines = input_file.readlines()
     
+for i, line in enumerate(lines):
+    if 'www.' in line:
+        lines[i] = line.replace('www.', '')
 for line in lines:
     if any(line[:32] == url[:32] for url in al_dl_urls):
         print(f"The URL {line.strip()} already exists in already_dl.txt")
