@@ -5,6 +5,11 @@ import time
 from tqdm import tqdm
 import os
 import re
+import sys
+
+filename = "input.txt"
+if len(sys.argv) > 1:
+    filename = sys.argv[1]
 
 config_path = 'config.txt'
 if not os.path.exists(config_path):
@@ -50,7 +55,7 @@ with open(already_dl_path, 'r') as al_dl_file:
 
 line_num = 0
     
-with open("input.txt", "r") as input_file:
+with open(filename, "r") as input_file:
     lines = input_file.readlines()
     
 for i, line in enumerate(lines):
