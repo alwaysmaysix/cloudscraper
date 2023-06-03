@@ -116,7 +116,7 @@ for line in lines:
             html_filtered = [line.replace('<a href="', '') for line in html_filtered] #remove <a href="
             for i, line in enumerate(html_filtered):
                 html_filtered[i] = line.split('\" class=\"n\"', 1)[0]
-            html_filtered = ['https://spankbang.com' + line for line in html_filtered]
+            html_filtered = ['https://spankbang.com' + line.replace(' ', '') for line in html_filtered]
             # Write html_filtered lines to a txt file named after title
             with open(curator + " - " + title + '.txt', 'a') as f:
                 for line in html_filtered:
