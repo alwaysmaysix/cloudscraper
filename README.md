@@ -26,7 +26,7 @@ Any requests made from this session object to websites protected by Cloudflare a
 
 # Usage
 1. Install Python 3
-2. Clone this repository
+2. Clone this repository (download all files here)
 3. Run setup.py
 4. Take input.txt and sb_scraper.py do any directory you want and use it
 
