@@ -26,6 +26,10 @@ Any requests made from this session object to websites protected by Cloudflare a
 
 # Usage
 1. Install Python 3
-2. Clone this repository
+2. Clone this repository (download all files here)
 3. Run setup.py
 4. Take input.txt and sb_scraper.py do any directory you want and use it
+
+# Features
+- Drag a txt file of choice onto the .py file to run that, otherwise, double clicking will default to input.txt
+- Playlist URLs as input work to output a .txt file of URLs which can then be fed back into the program
