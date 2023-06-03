@@ -1,5 +1,4 @@
 import cloudscraper
-#import requests
 from bs4 import BeautifulSoup
 import time
 from tqdm import tqdm
@@ -62,10 +61,22 @@ for i, line in enumerate(lines):
     if 'www.' in line:
         lines[i] = line.replace('www.', '')
 for line in lines:
+    incaseofplaylist = line
     if any(line[:32] == url[:32] for url in al_dl_urls):
         print(f"The URL {line.strip()} already exists in already_dl.txt")
 
 lines = [line for line in lines if not any(line[:32] == url[:32] for url in al_dl_urls)]
+
+def page_exists(url):
+    for _ in range(7):
+        try:
+            scraper = cloudscraper.create_scraper()
+            response = scraper.head(url, timeout=5)
+            return response.status_code < 400
+        except (scraper.ConnectionError, scraper.Timeout):
+            pass
+        time.sleep(1)
+    return False
 
 for line in lines:
     line = line.strip()
@@ -75,6 +86,64 @@ for line in lines:
         print("SpankBang is not in line " + str(line_num))
         print(line)
         continue
+    match = re.search("/playlist/\\S+", url)
+    if match:
+        genesisURL = url
+        page_number = 1
+        last_part = url.rsplit('/', 1)[-1] # Check if the last part of url after the last forward slash is a number
+        if re.match(r"^\d+$", last_part):
+            page_number = int(last_part)  # set page_number to the number
+        while True:
+            url = genesisURL + '/' + str(page_number)
+            if not page_exists(url):
+                break
+            scraper = cloudscraper.create_scraper()  # returns a CloudScraper instance
+            html = scraper.get(url).text  # return html
+            soup = BeautifulSoup(html, 'html.parser')
+            title = soup.title.string if soup.title else None
+            title = title.replace(' Playlist - HD Porn Videos - SpankBang', '')
+            curator_span = soup.find('span', {'class': 'parent'})  # find span tag with class 'parent'. curator name is within a span
+            if curator_span is not None:
+                curator_link = curator_span.find('a')  # find a tag within that span
+                if curator_link is not None:
+                    curator = curator_link.text  # get the text within the a tag
+            else:
+                print('Curator not found')
+
+            html_lines = html.split('\n') #split HTML into lines
+            
+            html_filtered = [line for line in html_lines if "\" class=\"n\"" in line] #titles are included at this point
+            html_filtered = [line.replace('<a href="', '') for line in html_filtered] #remove <a href="
+            for i, line in enumerate(html_filtered):
+                html_filtered[i] = line.split('\" class=\"n\"', 1)[0]
+            html_filtered = ['https://spankbang.com' + line for line in html_filtered]
+            # Write html_filtered lines to a txt file named after title
+            with open(curator + " - " + title + '.txt', 'a') as f:
+                for line in html_filtered:
+                    f.write(line + '\n')
+            html_filtered = '\n'.join(html_filtered)
+            print("Page " + str(page_number))
+            print(html_filtered)
+            if html_filtered == "":
+                page_number = page_number
+            else:
+                page_number += 1
+        time.sleep(3)
+        with open(curator + " - " + title + '.txt', "r") as urls_file:
+            urls_lines = urls_file.readlines()
+        with open(curator + " - " + title + '.txt', "w") as urls_file:
+            for i, url in enumerate(urls_lines):
+                print(str(i))
+                html = scraper.get(url.strip()).text #return html
+                soup = BeautifulSoup(html, 'html.parser')
+                og_url_tag = soup.select_one('meta[property="og:url"]') #find og:url
+                if og_url_tag is not None:
+                    og_url = og_url_tag['content'] # get the url from the content attribute
+                    print(og_url)
+                    urls_lines[i] = og_url + '\n' # replace the original url with og_url
+            urls_file.writelines(urls_lines)  # write all lines back to the file
+        continue
+    
     for attempt in range(7):
         
         scraper = cloudscraper.create_scraper()  # returns a CloudScraper instance
