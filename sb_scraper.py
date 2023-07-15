@@ -78,6 +78,7 @@ def page_exists(url):
         time.sleep(1)
     return False
 
+illegal_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
 for line in lines:
     line = line.strip()
     line_num+=1
@@ -102,6 +103,9 @@ for line in lines:
             soup = BeautifulSoup(html, 'html.parser')
             title = soup.title.string if soup.title else None
             title = title.replace(' Playlist - HD Porn Videos - SpankBang', '')
+            
+            for char in illegal_chars:
+                title = title.replace(char, '-')
             curator_span = soup.find('span', {'class': 'parent'})  # find span tag with class 'parent'. curator name is within a span
             if curator_span is not None:
                 curator_link = curator_span.find('a')  # find a tag within that span
@@ -109,6 +113,7 @@ for line in lines:
                     curator = curator_link.text  # get the text within the a tag
             else:
                 print('Curator not found')
+                curator = "Anon"
 
             html_lines = html.split('\n') #split HTML into lines
             
@@ -118,7 +123,7 @@ for line in lines:
                 html_filtered[i] = line.split('\" class=\"n\"', 1)[0]
             html_filtered = ['https://spankbang.com' + line.replace(' ', '') for line in html_filtered]
             # Write html_filtered lines to a txt file named after title
-            with open(curator + " - " + title + '.txt', 'a') as f:
+            with open(title + " - " + curator + '.txt', 'a') as f:
                 for line in html_filtered:
                     f.write(line + '\n')
             html_filtered = '\n'.join(html_filtered)
@@ -128,10 +133,10 @@ for line in lines:
                 page_number = page_number
             else:
                 page_number += 1
-        time.sleep(3)
-        with open(curator + " - " + title + '.txt', "r") as urls_file:
+        time.sleep(1)
+        with open(title + " - " + curator + '.txt', "r") as urls_file:
             urls_lines = urls_file.readlines()
-        with open(curator + " - " + title + '.txt', "w") as urls_file:
+        with open(title + " - " + curator + '.txt', "w") as urls_file:
             for i, url in enumerate(urls_lines):
                 print(str(i))
                 html = scraper.get(url.strip()).text #return html
