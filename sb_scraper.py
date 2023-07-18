@@ -111,6 +111,8 @@ for line in lines:
                 curator_link = curator_span.find('a')  # find a tag within that span
                 if curator_link is not None:
                     curator = curator_link.text  # get the text within the a tag
+                for char in illegal_chars:
+                    curator = curator.replace(char, '')
             else:
                 print('Curator not found')
                 curator = "Anon"
@@ -176,9 +178,11 @@ for line in lines:
                         uploader_name = uploader_name.replace(uploader_name[:index + len("channel")], "")
                 print("Uploader name:", uploader_name)
                 if uploader_name:
+                    for char in illegal_chars:
+                        uploader_name = uploader_name.replace(char, '-')
                     break
                 else:
-                    time.sleep(5)
+                    time.sleep(4)
             else:
                 print("Hmm...")
         else:
@@ -249,9 +253,9 @@ for line in lines:
         
         image_title_text = image_title_text.rstrip()
         image_title_text = image_title_text.replace("Watch ", "")
-        image_title_text = image_title_text.replace(": ", " ")
-        image_title_text = image_title_text.replace(" :", " ")
-        image_title_text = image_title_text.replace(":", "")
+        image_title_text = image_title_text.replace(": ", "- ")
+        image_title_text = image_title_text.replace(" :", " -")
+        image_title_text = image_title_text.replace(":", "-")
         image_title_text = image_title_text.replace("/", "-")
         image_title_text = image_title_text.replace("?", "-")
         image_title_text = image_title_text.replace("|", "-")
@@ -265,9 +269,9 @@ for line in lines:
         image_title_text = image_title_text[:127]
         video_title_text = video_title_text.rstrip()
         video_title_text = video_title_text.replace("Watch ", "")
-        video_title_text = video_title_text.replace(": ", " ")
-        video_title_text = video_title_text.replace(" :", " ")
-        video_title_text = video_title_text.replace(":", "")
+        video_title_text = video_title_text.replace(": ", "- ")
+        video_title_text = video_title_text.replace(" :", " -")
+        video_title_text = video_title_text.replace(":", "-")
         video_title_text = video_title_text.replace("/", "-")
         video_title_text = video_title_text.replace("?", "-")
         video_title_text = video_title_text.replace("|", "-")
