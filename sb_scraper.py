@@ -5,6 +5,7 @@ from tqdm import tqdm
 import os
 import re
 import sys
+import platform
 
 filename = "input.txt"
 if len(sys.argv) > 1:
@@ -13,7 +14,10 @@ if len(sys.argv) > 1:
 config_path = 'config.txt'
 if not os.path.exists(config_path):
     # Create the folder if it doesn't exist
-    folder_path = os.path.join(os.environ['APPDATA'], 'CB_DL')
+    if platform.system() == 'Windows':
+        folder_path = os.path.join(os.environ['APPDATA'], 'CB_DL')
+    else:
+        folder_path = os.path.join(os.path.expanduser("~"), 'Library/Application Support/CB_DL')
     os.makedirs(folder_path, exist_ok=True)
 
     # Set the config_path to the new location
@@ -21,7 +25,10 @@ if not os.path.exists(config_path):
     
     # Create the config file with the default content
     with open(config_path, 'w') as config_file:
-        config_file.write("ALREADY_DL_TXT: %APPDATA%\\CB_DL\\already_dl.txt")
+        if platform.system() == 'Windows':
+            config_file.write("ALREADY_DL_TXT: %APPDATA%\\CB_DL\\already_dl.txt")
+        else:
+            config_file.write("ALREADY_DL_TXT: ~/Library/Application Support/CB_DL/already_dl.txt")
 
 # Set the path for failed_dl.txt in the current directory
 failed_dl_path = 'failed_dl.txt'
@@ -32,7 +39,11 @@ already_dl_path = None
 with open(config_path, 'r') as config_file:
     for line in config_file:
         if line.startswith('ALREADY_DL_TXT:'):
-            already_dl_path = line.split(':', 1)[1].strip().replace('%APPDATA%', os.environ['APPDATA'])
+            already_dl_path = line.split(':', 1)[1].strip()
+            if platform.system() == 'Windows':
+                already_dl_path = already_dl_path.replace('%APPDATA%', os.environ['APPDATA'])
+            else:
+                already_dl_path = already_dl_path.replace('~/Library/Application Support', os.path.expanduser("~") + '/Library/Application Support')
             break
 
 # Check if the path was found
