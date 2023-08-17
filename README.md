@@ -28,8 +28,8 @@ Any requests made from this session object to websites protected by Cloudflare a
 1. Install Python 3
 2. Clone this repository (download all files here)
 3. Run setup.py install
-4. Take input.txt and sb_scraper.py do any directory you want and use it
-5. Insert a .txt file as an argument in the command line (or drag a .txt file over the script file) into split.py to split it up into 4. You can run multiple instances of Scraper at once. 
+4. Take input.txt and sb_scraper.py do any directory you want and use it. The text file contains a list of video URLs or playlists.
+5. Or, Insert a .txt file as an argument in the command line (or drag a .txt file over the script file) into split.py to split it up into 4. You can run multiple instances of Scraper at once. 
 
 # Features
 - Drag a txt file of choice onto the .py file to run that, otherwise, double clicking will default to input.txt
