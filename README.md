@@ -27,7 +27,7 @@ Any requests made from this session object to websites protected by Cloudflare a
 # Usage
 1. Install Python 3
 2. Clone this repository (download all files here)
-3. Run setup.py
+3. Run setup.py install
 4. Take input.txt and sb_scraper.py do any directory you want and use it
 5. Insert a .txt file as an argument in the command line (or drag a .txt file over the script file) into split.py to split it up into 4. You can run multiple instances of Scraper at once. 
 
