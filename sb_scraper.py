@@ -71,14 +71,22 @@ with open(filename, "r") as input_file:
 for i, line in enumerate(lines):
     if 'www.' in line:
         lines[i] = line.replace('www.', '')
-for line in lines:
-    incaseofplaylist = line
-    if any(line[:32] == url[:32] for url in al_dl_urls):
-        print(f"The URL {line.strip()} already exists in already_dl.txt")
 
 def remove_country_subdomain(url):
     return re.sub(r'https?://(\w+\.)?spankbang\.com/', 'https://spankbang.com/', url)
 
+for line in lines:
+    incaseofplaylist = line
+    line = remove_country_subdomain(line)
+    if any(line[:32] == url[:32] for url in al_dl_urls):
+        print(f"The URL {line.strip()} already exists in already_dl.txt")
+
+al_dl_urls = [remove_country_subdomain(url) for url in al_dl_urls]
+
+# Now clean the new URLs and check against al_dl_urls
+lines = [remove_country_subdomain(line.strip()) for line in lines]
+
+# Filter out URLs that already exist in al_dl_urls
 lines = [line for line in lines if not any(line[:32] == url[:32] for url in al_dl_urls)]
 
 def page_exists(url):
