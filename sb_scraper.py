@@ -76,6 +76,9 @@ for line in lines:
     if any(line[:32] == url[:32] for url in al_dl_urls):
         print(f"The URL {line.strip()} already exists in already_dl.txt")
 
+def remove_country_subdomain(url):
+    return re.sub(r'https?://(\w+\.)?spankbang\.com/', 'https://spankbang.com/', url)
+
 lines = [line for line in lines if not any(line[:32] == url[:32] for url in al_dl_urls)]
 
 def page_exists(url):
@@ -93,10 +96,10 @@ illegal_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
 for line in lines:
     line = line.strip()
     line_num+=1
-    url = line
-    if 'https://spankbang.com/' not in line and 'http://spankbang.com/' not in line:
+    url = remove_country_subdomain(line)
+    if 'https://spankbang.com/' not in url and 'http://spankbang.com/' not in url:
         print("SpankBang is not in line " + str(line_num))
-        print(line)
+        print(url)
         continue
     match = re.search("/playlist/\\S+", url)
     if match:
