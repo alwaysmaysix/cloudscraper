@@ -172,22 +172,23 @@ def scrape_profile(url):
 
 
 def scrape_channel(url):
-    match = re.search(r'/(\d+)/channel/(\w+)', url)
-    channel_number = match.group(1)
+    match = re.search(r'/(\w\w)/channel/(\w+)', url)
+    channel_code = match.group(1)
     channel_name = match.group(2)
     channel_urls = []
     page = 1
+    print(channel_name)
 
     # First, find out the total number of pages
     scraper = cloudscraper.create_scraper()
-    initial_url = f"https://spankbang.com/{channel_number}/channel/{channel_name}/1/"
+    initial_url = f"https://spankbang.com/{channel_code}/channel/{channel_name}/1/"
     html = scraper.get(initial_url).text
     soup = BeautifulSoup(html, 'html.parser')
     last_page_link = soup.find('li', {'class': 'next'}).find_previous_sibling('li')
     total_pages = int(last_page_link.text) if last_page_link and last_page_link.text.isdigit() else 1
 
     while page <= total_pages:
-        page_url = f"https://spankbang.com/{channel_number}/channel/{channel_name}/{page}/"
+        page_url = f"https://spankbang.com/{channel_code}/channel/{channel_name}/{page}/"
         successful = False
 
         while not successful:
@@ -243,7 +244,7 @@ for line in lines:
         print(url)
         continue
     # Check for Channel URL
-    if re.search(r"/\d+/channel/\S+", url):
+    if re.search(r"/\w\w/channel/\S+", url):
         scrape_channel(url)
         continue
     # Check for Profile URL
