@@ -99,6 +99,96 @@ def page_exists(url):
             pass
         time.sleep(1)
     return False
+def scrape_profile(url):
+    username = re.search(r'/profile/(\w+)', url).group(1)
+    profile_urls = []
+    
+    # Check if a specific page number is already in the URL
+    page_match = re.search(r'[?&]page=(\d+)', url)
+    if page_match:
+        print("page specified")
+        start_page = int(page_match.group(1))
+        end_page = start_page + 1
+    else:
+        start_page = 1
+        end_page = float('inf')  # Continue indefinitely
+
+    page = start_page
+    max_retries = 3  # Number of retries per page
+
+    while page < end_page:
+        retry_count = 0
+        videos_found = False
+
+        while retry_count < max_retries and not videos_found:
+            page_url = f"https://spankbang.com/profile/{username}?o=new&page={page}"
+            #print(page_url)  # Debug: print the page URL
+
+            scraper = cloudscraper.create_scraper()
+            html = scraper.get(page_url).text
+
+            soup = BeautifulSoup(html, 'html.parser')
+            video_items = soup.select('div.video-list-with-ads div.video-item > a.thumb')
+
+            if video_items:
+                videos_found = True
+                for item in video_items:
+                    if 'href' in item.attrs:
+                        video_url = 'https://spankbang.com' + item['href']
+                        profile_urls.append(video_url)
+
+            else:
+                #print(f"No video items found on page {page}, retry {retry_count + 1}/{max_retries}.")
+                retry_count += 1
+                time.sleep(1)  # Pause between retries
+
+        if not videos_found:
+            #print(f"No videos found on page {page} after {max_retries} retries.")
+            print(f"Collected URLs from {username}")
+            break
+
+        page += 1
+
+    with open(f"{username}_profile_videos.txt", 'w') as file:
+        for url in profile_urls:
+            file.write(url + '\n')
+
+
+
+def scrape_channel(url):
+    match = re.search(r'/(\d+)/channel/(\w+)', url)
+    channel_number = match.group(1)
+    channel_name = match.group(2)
+    channel_urls = []
+    page = 1
+
+    while True:
+        page_url = f"https://spankbang.com/{channel_number}/channel/{channel_name}/{page}/"
+        scraper = cloudscraper.create_scraper()
+        html = scraper.get(page_url).text
+
+        soup = BeautifulSoup(html, 'html.parser')
+        video_items = soup.select('div.video-item > a.thumb')
+
+        if not video_items:
+            print(f"No video items found on page {page}.")
+            break
+
+        for item in video_items:
+            if 'href' in item.attrs:
+                video_url = 'https://spankbang.com' + item['href']
+                channel_urls.append(video_url)
+            else:
+                print(f"No 'href' attribute found in item: {item}")
+
+        page += 1
+
+    with open(f"{channel_name}_channel_videos.txt", 'w') as file:
+        for url in channel_urls:
+            file.write(url + '\n')
+
+
+
 
 illegal_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
 for line in lines:
@@ -108,6 +198,14 @@ for line in lines:
     if 'https://spankbang.com/' not in url and 'http://spankbang.com/' not in url:
         print("SpankBang is not in line " + str(line_num))
         print(url)
+        continue
+    # Check for Channel URL
+    if re.search(r"/\d+/channel/\S+", url):
+        scrape_channel(url)
+        continue
+    # Check for Profile URL
+    if re.search("/profile/\\S+", url):
+        scrape_profile(url)
         continue
     match = re.search("/playlist/\\S+", url)
     if match:
