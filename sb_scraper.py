@@ -178,28 +178,40 @@ def scrape_channel(url):
     channel_urls = []
     page = 1
 
-    while True:
+    # First, find out the total number of pages
+    scraper = cloudscraper.create_scraper()
+    initial_url = f"https://spankbang.com/{channel_number}/channel/{channel_name}/1/"
+    html = scraper.get(initial_url).text
+    soup = BeautifulSoup(html, 'html.parser')
+    last_page_link = soup.find('li', {'class': 'next'}).find_previous_sibling('li')
+    total_pages = int(last_page_link.text) if last_page_link and last_page_link.text.isdigit() else 1
+
+    while page <= total_pages:
         page_url = f"https://spankbang.com/{channel_number}/channel/{channel_name}/{page}/"
-        scraper = cloudscraper.create_scraper()
-        html = scraper.get(page_url).text
+        successful = False
 
-        soup = BeautifulSoup(html, 'html.parser')
-        video_items = soup.select('div.video-item > a.thumb')
+        while not successful:
+            try:
+                html = scraper.get(page_url).text
+                soup = BeautifulSoup(html, 'html.parser')
+                video_items = soup.select('div.video-item > a.thumb')
 
-        if not video_items:
-            print(f"Finished collecting urls from {channel_name}")
-            #print(f"No video items found on page {page}.")
-            break
+                if video_items:
+                    successful = True
+                    for item in video_items:
+                        if 'href' in item.attrs:
+                            video_url = 'https://spankbang.com' + item['href']
+                            channel_urls.append(video_url)
+                else:
+                    print(f"No video items found on page {page}, retrying.")
+                    time.sleep(1)  # Pause before retry
 
-        for item in video_items:
-            if 'href' in item.attrs:
-                video_url = 'https://spankbang.com' + item['href']
-                channel_urls.append(video_url)
-            else:
-                print(f"No 'href' attribute found in item: {item}")
+            except Exception as e:
+                print(f"Error encountered: {e}. Retrying page {page}.")
+                time.sleep(1)  # Pause before retry
 
         page += 1
-
+    
     channel_name = channel_name.rstrip()
     channel_name = channel_name.replace("Watch ", "")
     channel_name = channel_name.replace(": ", "- ")
