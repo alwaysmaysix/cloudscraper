@@ -187,6 +187,7 @@ def scrape_channel(url):
         video_items = soup.select('div.video-item > a.thumb')
 
         if not video_items:
+            print(f"Finished collecting urls from {channel_name}")
             #print(f"No video items found on page {page}.")
             break
 
