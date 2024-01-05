@@ -149,6 +149,22 @@ def scrape_profile(url):
 
         page += 1
 
+    username = username.rstrip()
+    username = username.replace("Watch ", "")
+    username = username.replace(": ", "- ")
+    username = username.replace(" :", " -")
+    username = username.replace(":", "-")
+    username = username.replace("/", "-")
+    username = username.replace("?", "-")
+    username = username.replace("|", "-")
+    username = username.replace("<", "-")
+    username = username.replace(">", "-")
+    username = username.replace("*", "")
+    username = username.replace("\\", "")
+    username = username.replace("\"", "")
+    username = username.replace("\t", " ")
+    username = username.replace("\x08", "")
+
     with open(f"{username}_profile_videos.txt", 'w') as file:
         for url in profile_urls:
             file.write(url + '\n')
@@ -183,11 +199,25 @@ def scrape_channel(url):
 
         page += 1
 
+    channel_name = channel_name.rstrip()
+    channel_name = channel_name.replace("Watch ", "")
+    channel_name = channel_name.replace(": ", "- ")
+    channel_name = channel_name.replace(" :", " -")
+    channel_name = channel_name.replace(":", "-")
+    channel_name = channel_name.replace("/", "-")
+    channel_name = channel_name.replace("?", "-")
+    channel_name = channel_name.replace("|", "-")
+    channel_name = channel_name.replace("<", "-")
+    channel_name = channel_name.replace(">", "-")
+    channel_name = channel_name.replace("*", "")
+    channel_name = channel_name.replace("\\", "")
+    channel_name = channel_name.replace("\"", "")
+    channel_name = channel_name.replace("\t", " ")
+    channel_name = channel_name.replace("\x08", "")
+
     with open(f"{channel_name}_channel_videos.txt", 'w') as file:
         for url in channel_urls:
             file.write(url + '\n')
-
-
 
 
 illegal_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
