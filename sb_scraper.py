@@ -482,38 +482,44 @@ for line in lines:
 
 
     #dl vid
-    response = scraper.get(video_url, stream=True)
+    # Define the maximum number of retries and the initial delay
+    max_retries = 3
+    retry_delay = 5  # 5 seconds delay
 
-    total_size = int(response.headers.get('Content-Length', 0))
+    # Loop for the maximum number of retries
+    for attempt in range(max_retries):
+        try:
+            response = scraper.get(video_url, stream=True)
+            total_size = int(response.headers.get('Content-Length', 0))
 
-    # Check if the request was successful
-    if response.status_code == 200:
-        counter = 1
-        base_filename = f'{uploader_name} - {video_title_text}'
-        # Check if the file already exists and increment until a unique name is found
-        video_filename = f'{base_filename}.mp4'
-        while os.path.exists(video_filename):
-            video_filename = f'{base_filename} ({counter}).mp4'
-            counter += 1
-        # Save the video to a file
-        with open(video_filename, 'wb') as f:
-            with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading video") as pbar:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-                    # Update the progress bar
-                    pbar.update(len(chunk))
+            if response.status_code == 200:
+                counter = 1
+                base_filename = f'{uploader_name} - {video_title_text}'
+                video_filename = f'{base_filename}.mp4'
 
-        # Verify if the download reached 100%
-        if pbar.n == total_size:
-            print(f'Video downloaded successfully.' )
-            with open(already_dl_path, 'a') as al_dl_file:
-                al_dl_file.write('\n' + line)
-        else:
-            # Create failed_dl.txt in the current directory if it doesn't exist
-            if not os.path.exists(failed_dl_path):
-                with open(failed_dl_path, 'w') as failed_dl_file:
-                    pass
-    
-            print(f'Download incomplete. pbar: {pbar.n} total_size: {total_size}')
-            with open(failed_dl_path, 'a') as failed_dl_file:
-                failed_dl_file.write('\n' + line)
+                while os.path.exists(video_filename):
+                    video_filename = f'{base_filename} ({counter}).mp4'
+                    counter += 1
+
+                with open(video_filename, 'wb') as f:
+                    with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading video") as pbar:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                            pbar.update(len(chunk))
+
+                if pbar.n == total_size:
+                    print(f'Video downloaded successfully.' )
+                    with open(already_dl_path, 'a') as al_dl_file:
+                        al_dl_file.write('\n' + line)
+                    break  # Break out of the loop if download is successful
+                else:
+                    raise Exception("Download incomplete")
+        except Exception as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)  # Wait before retrying
+            else:
+                print("Failed to download video after maximum retries.")
+                # Log to failed_dl.txt here
+
