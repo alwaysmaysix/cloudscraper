@@ -558,5 +558,18 @@ for line in lines:
                 else:
                     raise Exception("Download incomplete - lower quality")
         except Exception as e:
-            print(f"Attempt to download second highest quality failed: {e}")
-            # Log to failed_dl.txt here
+            error_message = f"Failed to download: {e}"
+            print(error_message)
+            
+            # Create failed_dl.txt if it doesn't exist
+            if not os.path.exists(failed_dl_path):
+                with open(failed_dl_path, 'w') as failed_dl_file:
+                    pass
+
+            # Check for duplication before writing to failed_dl.txt
+            with open(failed_dl_path, 'r') as failed_dl_file:
+                existing_lines = failed_dl_file.readlines()
+
+            if line + '\n' not in existing_lines:
+                with open(failed_dl_path, 'a') as failed_dl_file:
+                    failed_dl_file.write(line + '\n')
