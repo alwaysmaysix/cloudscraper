@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import platform
+import json
 
 filename = "input.txt"
 if len(sys.argv) > 1:
@@ -74,6 +75,38 @@ for i, line in enumerate(lines):
 
 def remove_country_subdomain(url):
     return re.sub(r'https?://(\w+\.)?spankbang\.com/', 'https://spankbang.com/', url)
+
+second_best_quality_url = None
+def get_highest_quality_video_url(html):
+    global second_best_quality_url  # Indicate that we're using the global variable
+
+    match = re.search(r'var stream_data = ({.*?});', html, re.DOTALL)
+    if match:
+        stream_data_str = match.group(1)
+        
+        try:
+            stream_data_str = stream_data_str.replace("'", '"')
+            stream_data = json.loads(stream_data_str)
+            
+            available_qualities = ['4k', '1080p', '720p', '480p', '320p', '240p']
+            found_qualities = [q for q in available_qualities if stream_data.get(q)]
+
+            if found_qualities:
+                # Set the highest quality URL
+                highest_quality_url = stream_data[found_qualities[0]][0]
+
+                # Set the second highest quality URL if available
+                if len(found_qualities) > 1:
+                    second_best_quality_url = stream_data[found_qualities[1]][0]
+                else:
+                    second_best_quality_url = None
+
+                return highest_quality_url
+
+        except json.JSONDecodeError as e:
+            print("JSON decode error:", e)
+
+    return None
 
 for line in lines:
     incaseofplaylist = line
@@ -359,47 +392,18 @@ for line in lines:
     # Find the video tag with the id "main_video_player" and get the source tag within it
     video_tag = soup.find('video', {'id': 'main_video_player'})
     source_tag = video_tag.find('source') if video_tag else None
-    fk_possible = True
+    
     if source_tag:
         # Get the video URL from the source tag
-        video_url = source_tag['src']
-        if "720p.mp4" in video_url:
-            video_url_4k = video_url.replace("720p.mp4", "4k.mp4")
-            video_url_1080p = video_url.replace("720p.mp4", "1080p.mp4")
-            video_url_720p = video_url
-        if "480p.mp4" in video_url:
-            video_url_4k = video_url.replace("480p.mp4", "4k.mp4")
-            video_url_1080p = video_url.replace("480p.mp4", "1080p.mp4")
-            video_url_720p = video_url.replace("480p.mp4", "720p.mp4")
-            video_url_480p = video_url
-        if "320p.mp4" in video_url:
-            fk_possible = False
-            video_url_1080p = video_url.replace("320p.mp4", "1080p.mp4")
-            video_url_720p = video_url.replace("320p.mp4", "720p.mp4")
-            video_url_480p = video_url.replace("320p.mp4", "480p.mp4")
-            video_url_320p = video_url
-        if "240p.mp4" in video_url:
-            fk_possible = False
-            video_url_1080p = video_url.replace("240p.mp4", "1080p.mp4")
-            video_url_720p = video_url.replace("240p.mp4", "720p.mp4")
-            video_url_480p = video_url.replace("240p.mp4", "480p.mp4")
-            video_url_320p = video_url.replace("240p.mp4", "320p.mp4")
-            video_url_240p = video_url
-        #if 4k is available
-        if fk_possible == True and scraper.head(video_url_4k).status_code != 404:
-            video_url = video_url_4k
-        elif scraper.head(video_url_1080p).status_code != 404:
-            video_url = video_url_1080p
-        #if not, go down to 720p
-        elif scraper.head(video_url_720p).status_code != 404:
-            video_url = video_url_720p
-        elif scraper.head(video_url_480p).status_code != 404:
-            video_url = video_url_480p
-        elif scraper.head(video_url_320p).status_code != 404:
-            video_url = video_url_320p
-        elif scraper.head(video_url_240p).status_code != 404:
-            print("240p :(")
-            video_url = video_url_240p
+        scraper = cloudscraper.create_scraper()
+        html = scraper.get(url).text
+        # Use the function to get the highest quality video URL
+        video_url = get_highest_quality_video_url(html)
+        if video_url:
+            print("Highest quality video URL:", video_url)
+        else:
+            print("Failed to find video URL in the page source.")
+
         print("Video URL:", video_url)
     else:
         print("Failed to find the source tag.")
@@ -485,11 +489,14 @@ for line in lines:
     # Define the maximum number of retries and the initial delay
     max_retries = 3
     retry_delay = 5  # 5 seconds delay
+    attempt = 0
+    download_successful = False
+    current_quality_url = video_url
 
     # Loop for the maximum number of retries
-    for attempt in range(max_retries):
+    while attempt < max_retries:
         try:
-            response = scraper.get(video_url, stream=True)
+            response = scraper.get(current_quality_url, stream=True)
             total_size = int(response.headers.get('Content-Length', 0))
 
             if response.status_code == 200:
@@ -509,6 +516,7 @@ for line in lines:
 
                 if pbar.n == total_size:
                     print(f'Video downloaded successfully.' )
+                    download_successful = True
                     with open(already_dl_path, 'a') as al_dl_file:
                         al_dl_file.write('\n' + line)
                     break  # Break out of the loop if download is successful
@@ -516,10 +524,39 @@ for line in lines:
                     raise Exception("Download incomplete")
         except Exception as e:
             print(f"Attempt {attempt + 1} failed: {e}")
-            if attempt < max_retries - 1:
+            attempt += 1
+            if attempt < max_retries:
                 print(f"Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)  # Wait before retrying
-            else:
-                print("Failed to download video after maximum retries.")
-                # Log to failed_dl.txt here
+                time.sleep(retry_delay)
 
+    # If highest quality download fails, attempt second highest quality once
+    if not download_successful and second_best_quality_url:
+        print("Attempting to download second highest quality video.")
+        try:
+            response = scraper.get(second_best_quality_url, stream=True)
+            total_size = int(response.headers.get('Content-Length', 0))
+
+            if response.status_code == 200:
+                counter = 1
+                base_filename += ' - lower quality'
+                video_filename = f'{base_filename}.mp4'
+
+                while os.path.exists(video_filename):
+                    video_filename = f'{base_filename} ({counter}).mp4'
+                    counter += 1
+
+                with open(video_filename, 'wb') as f:
+                    with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading lower quality video") as pbar:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                            pbar.update(len(chunk))
+
+                if pbar.n == total_size:
+                    print(f'Second highest quality video downloaded successfully.')
+                    with open(already_dl_path, 'a') as al_dl_file:
+                        al_dl_file.write('\n' + line)
+                else:
+                    raise Exception("Download incomplete - lower quality")
+        except Exception as e:
+            print(f"Attempt to download second highest quality failed: {e}")
+            # Log to failed_dl.txt here
