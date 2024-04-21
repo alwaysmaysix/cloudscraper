@@ -8,7 +8,7 @@ import sys
 import platform
 import json
 from google.colab import files
-
+drive.mount('/content/drive')
 uploaded = files.upload()
 
 filename = "input.txt"
