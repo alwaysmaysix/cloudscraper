@@ -1,17 +1,12 @@
 import cloudscraper
 from bs4 import BeautifulSoup
-import time
 import os
 import re
 import sys
 import platform
 import json
 
-# Setting up basic paths and configuration
-filename = "input.txt"
-if len(sys.argv) > 1:
-    filename = sys.argv[1]
-
+# Setup configuration and folders
 config_path = 'config.txt'
 if not os.path.exists(config_path):
     if platform.system() == 'Windows':
@@ -26,7 +21,7 @@ if not os.path.exists(config_path):
         else:
             config_file.write("ALREADY_DL_TXT: ~/Library/Application Support/CB_DL/already_dl.txt")
 
-# Attempt to read the already downloaded URLs from configuration
+# Retrieve path for already downloaded URLs
 already_dl_path = None
 with open(config_path, 'r') as config_file:
     for line in config_file:
@@ -41,15 +36,15 @@ with open(config_path, 'r') as config_file:
 if already_dl_path is None:
     print("Could not find the path to already_dl.txt in the config.txt file.")
 if not os.path.exists(already_dl_path):
-    print("Creating already_dl.txt file at the specified path.")
+    os.makedirs(os.path.dirname(already_dl_path), exist_ok=True)
     with open(already_dl_path, 'w'):
         pass
 
-# Function to remove country-specific subdomains from URLs
+# Function to normalize and remove country-specific subdomains from URLs
 def remove_country_subdomain(url):
     return re.sub(r'https?://(\w+\.)?spankbang\.com/', 'https://spankbang.com/', url)
 
-# Function to simply print out URLs from a given page
+# Function to scrape and print URLs from the given webpage
 def scrape_page(url):
     scraper = cloudscraper.create_scraper()
     response = scraper.get(url)
@@ -61,9 +56,13 @@ def scrape_page(url):
             if video_url not in already_dl_urls:
                 print(video_url)
 
-# Read and process each line from the input file
-with open(filename, "r") as input_file:
-    lines = input_file.readlines()
-    for line in lines:
-        line = remove_country_subdomain(line.strip())
-        scrape_page(line)
+# Interactive URL input
+try:
+    while True:
+        user_input = input("Enter a URL (or type 'exit' to quit): ")
+        if user_input.lower() == 'exit':
+            break
+        user_input = remove_country_subdomain(user_input.strip())
+        scrape_page(user_input)
+except KeyboardInterrupt:
+    print("\nProcess was interrupted by user.")
