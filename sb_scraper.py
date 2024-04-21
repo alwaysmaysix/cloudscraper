@@ -7,6 +7,9 @@ import re
 import sys
 import platform
 import json
+from google.colab import files
+
+uploaded = files.upload()
 
 filename = "input.txt"
 if len(sys.argv) > 1:
