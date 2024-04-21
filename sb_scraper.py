@@ -58,15 +58,15 @@ os.makedirs(folder_path, exist_ok=True)
 # Check if the already_dl.txt file exists, and if not, create it
 if not os.path.exists(already_dl_path):
     print("Creating already_dl.txt file at the specified path.")
-    with open(already_dl_path, 'w'):
+    with (already_dl_path, 'w'):
         pass
 
-with open(already_dl_path, 'r') as al_dl_file:
+with (already_dl_path, 'r') as al_dl_file:
     al_dl_urls = al_dl_file.readlines()
 
 line_num = 0
     
-with open(filename, "r") as input_file:
+with (filename, "r") as input_file:
     lines = input_file.readlines()
     
 for i, line in enumerate(lines):
@@ -198,7 +198,7 @@ def scrape_profile(url):
     username = username.replace("\t", " ")
     username = username.replace("\x08", "")
 
-    with open(f"{username}_profile_videos.txt", 'w') as file:
+    with (f"{username}_profile_videos.txt", 'w') as file:
         for url in profile_urls:
             file.write(url + '\n')
 
@@ -262,7 +262,7 @@ def scrape_channel(url):
     channel_name = channel_name.replace("\t", " ")
     channel_name = channel_name.replace("\x08", "")
 
-    with open(f"{channel_name}_channel_videos.txt", 'w') as file:
+    with (f"{channel_name}_channel_videos.txt", 'w') as file:
         for url in channel_urls:
             file.write(url + '\n')
 
@@ -322,7 +322,7 @@ for line in lines:
                 html_filtered[i] = line.split('\" class=\"n\"', 1)[0]
             html_filtered = ['https://spankbang.com' + line.replace(' ', '') for line in html_filtered]
             # Write html_filtered lines to a txt file named after title
-            with open(title + " - " + curator + '.txt', 'a') as f:
+            with (title + " - " + curator + '.txt', 'a') as f:
                 for line in html_filtered:
                     f.write(line + '\n')
             html_filtered = '\n'.join(html_filtered)
@@ -333,9 +333,9 @@ for line in lines:
             else:
                 page_number += 1
         time.sleep(1)
-        with open(title + " - " + curator + '.txt', "r") as urls_file:
+        with (title + " - " + curator + '.txt', "r") as urls_file:
             urls_lines = urls_file.readlines()
-        with open(title + " - " + curator + '.txt', "w") as urls_file:
+        with (title + " - " + curator + '.txt', "w") as urls_file:
             for i, url in enumerate(urls_lines):
                 print(str(i))
                 html = scraper.get(url.strip()).text #return html
@@ -508,7 +508,7 @@ for line in lines:
                     video_filename = f'{base_filename} ({counter}).mp4'
                     counter += 1
 
-                with open(video_filename, 'wb') as f:
+                print(video_url):
                     with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading video") as pbar:
                         for chunk in response.iter_content(chunk_size=8192):
                             f.write(chunk)
