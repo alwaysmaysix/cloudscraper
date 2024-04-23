@@ -1,7 +1,7 @@
 # Production
 requests_toolbelt 
 pyparsing 
-pyrogram
+git+https://github.com/Masterolic/pyrogram.git
 requests
 tqdm
 cloudscraper
