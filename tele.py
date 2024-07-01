@@ -3,6 +3,19 @@ import subprocess
 from io import BytesIO
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
+import logging
+from pyrogram import Client
+
+# Enable logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Load API credentials from environment variables
+api_id = os.getenv('TELEGRAM_API_ID')
+api_hash = os.getenv('TELEGRAM_API_HASH')
 
 def create_input_file(url):
     with open('input.txt', 'w') as f:
@@ -45,15 +58,25 @@ def dl(update: Update, context: CallbackContext):
         update.message.reply_text('Please provide a URL.')
 
 def main():
-    updater = Updater('7267061537:AAHJ1t0VYcddMG0e4xHi2m77HIuaH8MqD7U')
-    dp = updater.dispatcher
+    # Initialize the pyrogram client
+    app = Client("my_account", api_id=api_id, api_hash=api_hash)
 
-    # Add the /dl command handler
-    dp.add_handler(CommandHandler('dl', dl))
+    with app:
+        # Use the token provided
+        token = '7267061537:AAE5jRlX1-MH0KSGmr-PFyF1GnxQOubycFU'
+        updater = Updater(token)
+        
+        # Log bot start
+        logger.info('Starting the bot...')
+        
+        dp = updater.dispatcher
 
-    # Start the bot
-    updater.start_polling()
-    updater.idle()
+        # Add the /dl command handler
+        dp.add_handler(CommandHandler('dl', dl))
+
+        # Start the bot
+        updater.start_polling()
+        updater.idle()
 
 if __name__ == '__main__':
     main()
