@@ -27,7 +27,7 @@ def dl(update, context):
 
 def main():
     # Replace 'YOUR_TOKEN' with the token you received from BotFather
-    updater = Updater('YOUR_TOKEN', use_context=True)
+    updater = Updater('7267061537:AAE5jRlX1-MH0KSGmr-PFyF1GnxQOubycFU', use_context=True)
     dp = updater.dispatcher
 
     # Add the /dl command handler
