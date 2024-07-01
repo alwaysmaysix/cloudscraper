@@ -63,7 +63,7 @@ def main():
 
     with app:
         # Use the token provided
-        token = '7267061537:AAE5jRlX1-MH0KSGmr-PFyF1GnxQOubycFU'
+        token = '7267061537:AAGcZOMma9SzGIpcSR8eBAKoQfoaAtmeuK4'
         updater = Updater(token)
         
         # Log bot start
