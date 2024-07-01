@@ -45,7 +45,7 @@ def dl(update: Update, context: CallbackContext):
         update.message.reply_text('Please provide a URL.')
 
 def main():
-    updater = Updater('7267061537:AAE5jRlX1-MH0KSGmr-PFyF1GnxQOubycFU')
+    updater = Updater('7267061537:AAHJ1t0VYcddMG0e4xHi2m77HIuaH8MqD7U')
     dp = updater.dispatcher
 
     # Add the /dl command handler
