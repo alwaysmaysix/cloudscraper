@@ -3,8 +3,7 @@ import logging
 import subprocess
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
-from telethon.sync import TelegramClient
-from telethon.errors import SessionPasswordNeededError
+from telegram_upload import upload_files
 
 # Enable logging
 logging.basicConfig(
@@ -47,11 +46,11 @@ def dl(update: Update, context: CallbackContext):
                 with open(temp_filename, 'wb') as temp_file:
                     temp_file.write(content)
                 
-                # Inform user about upload process
-                update.message.reply_text(f'Downloaded content from {url}. Uploading...')
-                
-                # Upload the file using Telethon
-                upload_file_telethon(temp_filename, url, update)
+                # Upload the file to Telegram
+                upload_files([temp_filename])
+
+                # Inform user about download and upload process
+                update.message.reply_text(f'Downloaded and uploaded content from {url}. Processing complete.')
                 
                 # Delete the temporary file
                 os.remove(temp_filename)
@@ -66,20 +65,6 @@ def dl(update: Update, context: CallbackContext):
             delete_input_file()
     else:
         update.message.reply_text('Please provide a URL.')
-
-def upload_file_telethon(file_path, url, update):
-    try:
-        with TelegramClient('session_name', api_id, api_hash) as client:
-            client.start(phone=phone_number)
-            try:
-                client.send_file('me', file_path, caption=f'Content from {url}')
-                update.message.reply_text(f'Uploaded content from {url}')
-            except SessionPasswordNeededError:
-                update.message.reply_text('Two-step verification enabled. Please provide your password.')
-            except Exception as e:
-                update.message.reply_text(f'Failed to upload content: {e}')
-    except Exception as e:
-        update.message.reply_text(f'Failed to start Telethon client: {e}')
 
 def main():
     # Use the token provided for the Telegram bot, but only for command handling
