@@ -66,7 +66,7 @@ def dl(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Please provide a URL.')
 
-def upload_to_telegram(file_path, retries=3, timeout=200):
+def upload_to_telegram(file_path, retries=3, timeout=10000:
     api_id = os.getenv('TELEGRAM_API_ID')
     api_hash = os.getenv('TELEGRAM_API_HASH')
     phone_number = os.getenv('TELEGRAM_PHONE_NUMBER')
