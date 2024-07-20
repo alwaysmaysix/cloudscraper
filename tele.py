@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 # Load API credentials from environment variables
 api_id = os.getenv('TELEGRAM_API_ID')
 api_hash = os.getenv('TELEGRAM_API_HASH')
-phone_number = os.getenv('TELEGRAM_PHONE_NUMBER')
-
+phone_number = os.getenv('YOUR_BOT_TOKEN')
+token = os.environ['TELEGRAM_BOT_TOKEN']
 def create_input_file(url):
     with open('input.txt', 'w') as f:
         f.write(url)
@@ -74,7 +74,6 @@ def dl(update: Update, context: CallbackContext):
 
 def main():
     # Use the token provided for the Telegram bot, but only for command handling
-    token = 'YOUR_BOT_TOKEN'
     updater = Updater(token)
     
     # Log bot start
