@@ -12,6 +12,15 @@ import sys
 import platform
 import json
 
+print("Please enter the URLs (separated by commas):")
+urls = input()
+with open('input.txt', 'w') as file:
+    file.write(urls.replace(',', '\n'))
+
+filename = "input.txt"
+if len(sys.argv) > 1:
+    filename = sys.argv[1]
+
 # Initialize Pyrogram client
 app = Client("my_bot")
 
