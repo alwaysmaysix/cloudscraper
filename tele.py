@@ -1,10 +1,11 @@
 import os
+import logging
 import subprocess
 from io import BytesIO
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
-import logging
-from pyrogram import Client
+from telethon.sync import TelegramClient
+from telethon.errors import SessionPasswordNeededError
 
 # Enable logging
 logging.basicConfig(
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 # Load API credentials from environment variables
 api_id = os.getenv('TELEGRAM_API_ID')
 api_hash = os.getenv('TELEGRAM_API_HASH')
+phone_number = os.getenv('TELEGRAM_PHONE_NUMBER')
 
 def create_input_file(url):
     with open('input.txt', 'w') as f:
@@ -40,11 +42,24 @@ def dl(update: Update, context: CallbackContext):
                 with open('output.txt', 'rb') as f:
                     content = f.read()
                 
-                # Send the processed content as a file via Telegram
-                file_bytes = BytesIO(content)
-                file_bytes.name = url.split("/")[-1]
-                context.bot.send_document(chat_id=update.message.chat.id, document=file_bytes, filename=url.split("/")[-1])
-                update.message.reply_text(f'Downloaded content from {url}')
+                # Save content to a temporary file
+                temp_filename = 'output_temp.txt'
+                with open(temp_filename, 'wb') as temp_file:
+                    temp_file.write(content)
+                
+                # Upload the file using Telethon
+                with TelegramClient('session_name', api_id, api_hash) as client:
+                    client.start(phone=phone_number)
+                    try:
+                        client.send_file('me', temp_filename, caption=f'Content from {url}')
+                        update.message.reply_text(f'Downloaded and uploaded content from {url}')
+                    except SessionPasswordNeededError:
+                        update.message.reply_text('Two-step verification enabled. Please provide your password.')
+                    except Exception as e:
+                        update.message.reply_text(f'Failed to upload content: {e}')
+                
+                # Delete the temporary file
+                os.remove(temp_filename)
             else:
                 update.message.reply_text(f'Failed to process content from {url}: {result.stderr}')
             
@@ -58,25 +73,21 @@ def dl(update: Update, context: CallbackContext):
         update.message.reply_text('Please provide a URL.')
 
 def main():
-    # Initialize the pyrogram client
-    app = Client("my_account", api_id=api_id, api_hash=api_hash)
+    # Use the token provided for the Telegram bot, but only for command handling
+    token = 'YOUR_BOT_TOKEN'
+    updater = Updater(token)
+    
+    # Log bot start
+    logger.info('Starting the bot...')
+    
+    dp = updater.dispatcher
 
-    with app:
-        # Use the token provided
-        token = '7267061537:AAGcZOMma9SzGIpcSR8eBAKoQfoaAtmeuK4'
-        updater = Updater(token)
-        
-        # Log bot start
-        logger.info('Starting the bot...')
-        
-        dp = updater.dispatcher
+    # Add the /dl command handler
+    dp.add_handler(CommandHandler('dl', dl))
 
-        # Add the /dl command handler
-        dp.add_handler(CommandHandler('dl', dl))
-
-        # Start the bot
-        updater.start_polling()
-        updater.idle()
+    # Start the bot
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == '__main__':
     main()
