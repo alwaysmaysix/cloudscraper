@@ -3,7 +3,8 @@ import logging
 import subprocess
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
-from telethon import TelegramClient
+from telethon import TelegramClient, errors
+from time import sleep
 
 # Enable logging
 logging.basicConfig(
@@ -65,20 +66,32 @@ def dl(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Please provide a URL.')
 
-def upload_to_telegram(file_path):
+def upload_to_telegram(file_path, retries=3, timeout=200):
     api_id = os.getenv('TELEGRAM_API_ID')
     api_hash = os.getenv('TELEGRAM_API_HASH')
     phone_number = os.getenv('TELEGRAM_PHONE_NUMBER')
     session_name = 'session'
 
-    client = TelegramClient(session_name, api_id, api_hash)
+    client = TelegramClient(session_name, api_id, api_hash, timeout=timeout)
     client.connect()
 
     if not client.is_user_authorized():
         client.send_code_request(phone_number)
         client.sign_in(phone_number, input('Enter the code: '))
 
-    client.send_file('me', file_path)
+    for attempt in range(retries):
+        try:
+            client.send_file('me', file_path)
+            break
+        except errors.FloodWaitError as e:
+            logger.warning(f'Flood wait error: Waiting for {e.seconds} seconds before retrying.')
+            sleep(e.seconds)
+        except (errors.TimeoutError, errors.NetworkMigrateError, errors.PhoneMigrateError) as e:
+            logger.warning(f'Error occurred: {e}. Retrying {attempt + 1}/{retries}...')
+            sleep(5)
+        except Exception as e:
+            logger.error(f'Failed to upload file: {e}')
+            break
 
     client.disconnect()
 
