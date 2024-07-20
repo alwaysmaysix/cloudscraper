@@ -1,7 +1,6 @@
 import os
 import logging
 import subprocess
-from io import BytesIO
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from telethon.sync import TelegramClient
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 api_id = os.getenv('TELEGRAM_API_ID')
 api_hash = os.getenv('TELEGRAM_API_HASH')
 phone_number = os.getenv('TELEGRAM_PHONE_NUMBER')
-token = os.getenv('TELEGRAM_BOT_TOKEN')
+bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
 
 def create_input_file(url):
     with open('input.txt', 'w') as f:
@@ -48,16 +47,11 @@ def dl(update: Update, context: CallbackContext):
                 with open(temp_filename, 'wb') as temp_file:
                     temp_file.write(content)
                 
+                # Inform user about upload process
+                update.message.reply_text(f'Downloaded content from {url}. Uploading...')
+                
                 # Upload the file using Telethon
-                with TelegramClient('session_name', api_id, api_hash) as client:
-                    client.start(phone=phone_number)
-                    try:
-                        client.send_file('me', temp_filename, caption=f'Content from {url}')
-                        update.message.reply_text(f'Downloaded and uploaded content from {url}')
-                    except SessionPasswordNeededError:
-                        update.message.reply_text('Two-step verification enabled. Please provide your password.')
-                    except Exception as e:
-                        update.message.reply_text(f'Failed to upload content: {e}')
+                upload_file_telethon(temp_filename, url, update)
                 
                 # Delete the temporary file
                 os.remove(temp_filename)
@@ -73,9 +67,23 @@ def dl(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Please provide a URL.')
 
+def upload_file_telethon(file_path, url, update):
+    try:
+        with TelegramClient('session_name', api_id, api_hash) as client:
+            client.start(phone=phone_number)
+            try:
+                client.send_file('me', file_path, caption=f'Content from {url}')
+                update.message.reply_text(f'Uploaded content from {url}')
+            except SessionPasswordNeededError:
+                update.message.reply_text('Two-step verification enabled. Please provide your password.')
+            except Exception as e:
+                update.message.reply_text(f'Failed to upload content: {e}')
+    except Exception as e:
+        update.message.reply_text(f'Failed to start Telethon client: {e}')
+
 def main():
     # Use the token provided for the Telegram bot, but only for command handling
-    updater = Updater(token)
+    updater = Updater(bot_token)
     
     # Log bot start
     logger.info('Starting the bot...')
