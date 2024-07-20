@@ -3,7 +3,7 @@ import logging
 import subprocess
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
-from telegram_upload import upload_files
+from telethon import TelegramClient
 
 # Enable logging
 logging.basicConfig(
@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 api_id = os.getenv('TELEGRAM_API_ID')
 api_hash = os.getenv('TELEGRAM_API_HASH')
 phone_number = os.getenv('TELEGRAM_PHONE_NUMBER')
-bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
 
 def create_input_file(url):
     with open('input.txt', 'w') as f:
@@ -46,11 +45,11 @@ def dl(update: Update, context: CallbackContext):
                 with open(temp_filename, 'wb') as temp_file:
                     temp_file.write(content)
                 
-                # Upload the file to Telegram
-                upload_files([temp_filename])
-
-                # Inform user about download and upload process
-                update.message.reply_text(f'Downloaded and uploaded content from {url}. Processing complete.')
+                # Upload the file to Telegram using telegram-upload
+                upload_to_telegram(temp_filename)
+                
+                # Inform user about the download process
+                update.message.reply_text(f'Downloaded content from {url}. Processing complete.')
                 
                 # Delete the temporary file
                 os.remove(temp_filename)
@@ -66,9 +65,26 @@ def dl(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Please provide a URL.')
 
+def upload_to_telegram(file_path):
+    api_id = os.getenv('TELEGRAM_API_ID')
+    api_hash = os.getenv('TELEGRAM_API_HASH')
+    phone_number = os.getenv('TELEGRAM_PHONE_NUMBER')
+    session_name = 'session'
+
+    client = TelegramClient(session_name, api_id, api_hash)
+    client.connect()
+
+    if not client.is_user_authorized():
+        client.send_code_request(phone_number)
+        client.sign_in(phone_number, input('Enter the code: '))
+
+    client.send_file('me', file_path)
+
+    client.disconnect()
+
 def main():
     # Use the token provided for the Telegram bot, but only for command handling
-    updater = Updater(bot_token)
+    updater = Updater(os.getenv('TELEGRAM_BOT_TOKEN'))
     
     # Log bot start
     logger.info('Starting the bot...')
