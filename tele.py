@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 # Load API credentials from environment variables
 api_id = os.getenv('TELEGRAM_API_ID')
 api_hash = os.getenv('TELEGRAM_API_HASH')
-phone_number = os.getenv('YOUR_BOT_TOKEN')
-token = os.environ['TELEGRAM_BOT_TOKEN']
+phone_number = os.getenv('TELEGRAM_PHONE_NUMBER')
+token = os.getenv('TELEGRAM_BOT_TOKEN')
+
 def create_input_file(url):
     with open('input.txt', 'w') as f:
         f.write(url)
