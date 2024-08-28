@@ -25,7 +25,7 @@ if len(sys.argv) > 1:
 app = Client("my_bot")
 
 async def handle_downloaded_files(destination_chat_id):
-    download_dir = "downloads"
+    download_dir = "/content/downloads"
     for filename in os.listdir(download_dir):
         file_path = os.path.join(download_dir, filename)
         if os.path.isfile(file_path):
@@ -136,7 +136,7 @@ def get_highest_quality_video_url(html):
             stream_data_str = stream_data_str.replace("'", '"')
             stream_data = json.loads(stream_data_str)
             
-            available_qualities = ['4k', '1080p', '720p', '480p', '320p', '240p']
+            available_qualities = ['480p', '320p', '240p']
             found_qualities = [q for q in available_qualities if stream_data.get(q)]
 
             if found_qualities:
@@ -279,7 +279,7 @@ for line in lines:
         total_size = int(response.headers.get('content-length', 0))
         counter = 1
         base_filename = os.path.basename(line)
-        video_filename = f'downloads/{base_filename}.mp4'
+        video_filename = f'/content/downloads/{base_filename}.mp4'
         if not os.path.exists(video_filename):
             os.makedirs(os.path.dirname(video_filename), exist_ok=True)
             with open(video_filename, 'wb') as f:
