@@ -88,7 +88,7 @@ def get_highest_quality_video_url(html):
             stream_data_str = stream_data_str.replace("'", '"')
             stream_data = json.loads(stream_data_str)
             
-            available_qualities = ['4k', '1080p', '720p', '480p', '320p', '240p']
+            available_qualities = ['480p', '320p', '240p']
             found_qualities = [q for q in available_qualities if stream_data.get(q)]
 
             if found_qualities:
