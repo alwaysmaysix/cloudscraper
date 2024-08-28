@@ -20,14 +20,6 @@ bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
 # Create a Pyrogram Client
 app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 
-def create_input_file(url):
-    with open('input.txt', 'w') as f:
-        f.write(url)
-
-def delete_input_file():
-    if os.path.exists('input.txt'):
-        os.remove('input.txt')
-
 @app.on_message(filters.command("dl"))
 def dl(client: Client, message: Message):
     url = ' '.join(message.command[1:])
@@ -40,23 +32,11 @@ def dl(client: Client, message: Message):
             result = subprocess.run(['python', 'sb_scraper.py'], capture_output=True, text=True)
             
             if result.returncode == 0:
-                # Read the output file produced by sb_scraper.py
-                with open('output.txt', 'rb') as f:
-                    content = f.read()
-                
-                # Save content to a temporary file
-                temp_filename = 'output_temp.mp4'
-                with open(temp_filename, 'wb') as temp_file:
-                    temp_file.write(content)
-                
-                # Upload the video file to Telegram
-                upload_to_telegram(client, message.chat.id, temp_filename)
+                # Upload video files from the /content/downloads directory
+                upload_and_delete_videos(client, message.chat.id)
                 
                 # Inform user about the download process
                 message.reply_text(f'Downloaded content from {url}. Processing complete.')
-                
-                # Delete the temporary file
-                os.remove(temp_filename)
             else:
                 message.reply_text(f'Failed to process content from {url}: {result.stderr}')
             
@@ -69,15 +49,33 @@ def dl(client: Client, message: Message):
     else:
         message.reply_text('Please provide a URL.')
 
-def upload_to_telegram(client: Client, chat_id: int, file_path: str, retries=3):
-    fname = os.path.basename(file_path)
-    for attempt in range(retries):
-        try:
-            client.send_video(chat_id, file_path, height=1280, width=720, caption=fname, parse_mode=enums.ParseMode.MARKDOWN)
-            break
-        except Exception as e:
-            logger.error(f'Failed to upload file on attempt {attempt + 1}/{retries}: {e}')
-            sleep(5)
+def create_input_file(url):
+    with open('input.txt', 'w') as f:
+        f.write(url)
+
+def delete_input_file():
+    if os.path.exists('input.txt'):
+        os.remove('input.txt')
+
+def upload_and_delete_videos(client: Client, chat_id: int, retries=3):
+    directory = '/content/downloads'
+    for filename in os.listdir(directory):
+        if filename.endswith('.mp4'):
+            base_filename = os.path.splitext(filename)[0]  # Get the base filename without extension
+            file_path = os.path.join(directory, filename)
+            if os.path.isfile(file_path):
+                for attempt in range(retries):
+                    try:
+                        # Send the video file with the base filename as the caption
+                        client.send_video(chat_id, file_path, height=1280, width=720, caption=f"{base_filename}.mp4", parse_mode=enums.ParseMode.MARKDOWN)
+                        
+                        # Delete the file after successful upload
+                        os.remove(file_path)
+                        logger.info(f'Successfully uploaded and deleted {file_path}')
+                        break
+                    except Exception as e:
+                        logger.error(f'Failed to upload file on attempt {attempt + 1}/{retries}: {e}')
+                        sleep(5)
 
 def main():
     # Start the Pyrogram client
