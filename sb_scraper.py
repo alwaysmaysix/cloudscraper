@@ -12,11 +12,6 @@ import sys
 import platform
 import json
 
-print("Please enter the URLs (separated by commas):")
-urls = input()
-with open('input.txt', 'w') as file:
-    file.write(urls.replace(',', '\n'))
-
 filename = "input.txt"
 if len(sys.argv) > 1:
     filename = sys.argv[1]
@@ -25,7 +20,7 @@ if len(sys.argv) > 1:
 app = Client("my_bot")
 
 async def handle_downloaded_files(destination_chat_id):
-    download_dir = "/content/downloads"
+    download_dir = '/content/downloads'
     for filename in os.listdir(download_dir):
         file_path = os.path.join(download_dir, filename)
         if os.path.isfile(file_path):
