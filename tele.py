@@ -36,7 +36,7 @@ def dl(client: Client, message: Message):
             
             if result.returncode == 0:
                 # Upload video files from the downloads directory in the repo path
-                upload_and_delete_videos(client, message.chat.id, os.path.join(repo_path, 'downloads'))
+                upload_and_delete_videos(client, message.chat.id, os.path.join(repo_path))
                 
                 # Inform user about the download process
                 message.reply_text(f'Downloaded content from {url}. Processing complete.')
