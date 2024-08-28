@@ -1,301 +1,3 @@
-import os
-import time
-import requests
-import asyncio
-from tqdm import tqdm
-from pyrogram import Client
-from io import BytesIO
-import cloudscraper
-from bs4 import BeautifulSoup
-import re
-import sys
-import platform
-import json
-
-filename = "input.txt"
-if len(sys.argv) > 1:
-    filename = sys.argv[1]
-
-# Initialize Pyrogram client
-app = Client("my_bot")
-
-async def handle_downloaded_files(destination_chat_id):
-    download_dir = '/content/downloads'
-    for filename in os.listdir(download_dir):
-        file_path = os.path.join(download_dir, filename)
-        if os.path.isfile(file_path):
-            # Send the file via Telegram
-            await app.send_document(chat_id=destination_chat_id, document=file_path)
-
-async def download_and_send_files(input_file_path, destination_chat_id):
-    with open(input_file_path, "r") as file:
-        for line in file:
-            url = line.strip()
-            # Download the file into memory
-            try:
-                response = requests.get(url)
-                if response.status_code == 200:
-                    # Send the file via Pyrogram without saving it to disk
-                    file_bytes = BytesIO(response.content)
-                    await app.send_document(chat_id=destination_chat_id, document=file_bytes)
-                else:
-                    print(f"Failed to download {url}: HTTP status code {response.status_code}")
-            except Exception as e:
-                print(f"Failed to download {url}: {e}")
-
-async def main(input_file_path, destination_chat_id):
-    # Download and send files
-    await download_and_send_files(input_file_path, destination_chat_id)
-    
-    # Handle downloaded files from the previous script
-    await handle_downloaded_files(destination_chat_id)
-
-# Original sb_scraper.py code
-filename = "input.txt"
-if len(sys.argv) > 1:
-    filename = sys.argv[1]
-
-config_path = 'config.txt'
-if not os.path.exists(config_path):
-    # Create the folder if it doesn't exist
-    if platform.system() == 'Windows':
-        folder_path = os.path.join(os.environ['APPDATA'], 'CB_DL')
-    else:
-        folder_path = os.path.join(os.path.expanduser("~"), 'Library/Application Support/CB_DL')
-    os.makedirs(folder_path, exist_ok=True)
-
-    # Set the config_path to the new location
-    config_path = os.path.join(folder_path, 'config.txt')
-    
-    # Create the config file with the default content
-    with open(config_path, 'w') as config_file:
-        if platform.system() == 'Windows':
-            config_file.write("ALREADY_DL_TXT: %APPDATA%\\CB_DL\\already_dl.txt")
-        else:
-            config_file.write("ALREADY_DL_TXT: ~/Library/Application Support/CB_DL/already_dl.txt")
-
-# Set the path for failed_dl.txt in the current directory
-failed_dl_path = 'failed_dl.txt'
-
-# Read the config.txt file and get the path to already_dl.txt
-
-already_dl_path = None
-with open(config_path, 'r') as config_file:
-    for line in config_file:
-        if line.startswith('ALREADY_DL_TXT:'):
-            already_dl_path = line.split(':', 1)[1].strip()
-            if platform.system() == 'Windows':
-                already_dl_path = already_dl_path.replace('%APPDATA%', os.environ['APPDATA'])
-            else:
-                already_dl_path = already_dl_path.replace('~/Library/Application Support', os.path.expanduser("~") + '/Library/Application Support')
-            break
-
-# Check if the path was found
-if already_dl_path is None:
-    print("Could not find the path to already_dl.txt in the config.txt file.")
-
-# Check if the folder for already_dl.txt exists, and if not, create it
-folder_path = os.path.dirname(already_dl_path)
-os.makedirs(folder_path, exist_ok=True)
-
-# Check if the already_dl.txt file exists, and if not, create it
-if not os.path.exists(already_dl_path):
-    print("Creating already_dl.txt file at the specified path.")
-    with open(already_dl_path, 'w'):
-        pass
-
-with open(already_dl_path, 'r') as al_dl_file:
-    al_dl_urls = al_dl_file.readlines()
-
-line_num = 0
-    
-with open(filename, "r") as input_file:
-    lines = input_file.readlines()
-    
-for i, line in enumerate(lines):
-    if 'www.' in line:
-        lines[i] = line.replace('www.', '')
-
-def remove_country_subdomain(url):
-    return re.sub(r'https?://(\w+\.)?spankbang\.com/', 'https://spankbang.com/', url)
-
-second_best_quality_url = None
-def get_highest_quality_video_url(html):
-    global second_best_quality_url  # Indicate that we're using the global variable
-
-    match = re.search(r'var stream_data = ({.*?});', html, re.DOTALL)
-    if match:
-        stream_data_str = match.group(1)
-        
-        try:
-            stream_data_str = stream_data_str.replace("'", '"')
-            stream_data = json.loads(stream_data_str)
-            
-            available_qualities = ['480p', '320p', '240p']
-            found_qualities = [q for q in available_qualities if stream_data.get(q)]
-
-            if found_qualities:
-                # Set the highest quality URL
-                highest_quality_url = stream_data[found_qualities[0]][0]
-
-                # Set the second highest quality URL if available
-                if len(found_qualities) > 1:
-                    second_best_quality_url = stream_data[found_qualities[1]][0]
-                else:
-                    second_best_quality_url = None
-
-                return highest_quality_url
-
-        except json.JSONDecodeError as e:
-            print("JSON decode error:", e)
-
-    return None
-
-for line in lines:
-    incaseofplaylist = line
-    line = remove_country_subdomain(line)
-    if any(line[:32] == url[:32] for url in al_dl_urls):
-        print(f"The URL {line.strip()} already exists in already_dl.txt")
-
-al_dl_urls = [remove_country_subdomain(url) for url in al_dl_urls]
-
-# Now clean the new URLs and check against al_dl_urls
-lines = [remove_country_subdomain(line.strip()) for line in lines]
-
-# Filter out URLs that already exist in al_dl_urls
-lines = [line for line in lines if not any(line[:32] == url[:32] for url in al_dl_urls)]
-
-def page_exists(url):
-    for _ in range(7):
-        try:
-            scraper = cloudscraper.create_scraper()
-            response = scraper.head(url, timeout=5)
-            return response.status_code < 400
-        except (scraper.ConnectionError, scraper.Timeout):
-            pass
-        time.sleep(1)
-    return False
-def scrape_profile(url):
-    username = re.search(r'/profile/(\w+)', url).group(1)
-    profile_urls = []
-    
-    # Check if a specific page number is already in the URL
-    page_match = re.search(r'[?&]page=(\d+)', url)
-    if page_match:
-        print("page specified")
-        start_page = int(page_match.group(1))
-        end_page = start_page + 1
-    else:
-        start_page = 1
-        end_page = 4
-        
-    for page_num in range(start_page, end_page):
-        print(f"Scraping profile page {page_num}...")
-        page_url = f"https://spankbang.com/profile/{username}?page={page_num}"
-        response = cloudscraper.create_scraper().get(page_url)
-
-        if response.status_code != 200:
-            print(f"Failed to retrieve profile page {page_num}: HTTP {response.status_code}")
-            break
-
-        soup = BeautifulSoup(response.text, 'html.parser')
-        video_links = soup.find_all('a', class_='thumbnail')
-        
-        for link in video_links:
-            profile_urls.append("https://spankbang.com" + link['href'])
-            
-    return profile_urls
-
-def scrape_video_page(url):
-    print(f"Scraping video page {url}...")
-    response = cloudscraper.create_scraper().get(url)
-    if response.status_code != 200:
-        print(f"Failed to retrieve video page {url}: HTTP {response.status_code}")
-        return None
-
-    html = response.text
-    highest_quality_url = get_highest_quality_video_url(html)
-    if highest_quality_url:
-        return highest_quality_url
-
-    print("Failed to find the highest quality video URL.")
-    return None
-
-if line_num > 0:
-    print("Cleaning and filtering new URLs...")
-    lines = lines[line_num - 1:]
-    print(lines)
-
-# Start downloading the videos
-for line in lines:
-    # Fetch the video URL
-    if 'profile' in line:
-        video_urls = scrape_profile(line)
-        for video_url in video_urls:
-            print(f"Downloading video from profile: {video_url}")
-            try:
-                highest_quality_url = scrape_video_page(video_url)
-                if highest_quality_url:
-                    line = highest_quality_url
-                    print(f"Starting download: {line}")
-                else:
-                    print("Failed to get the highest quality video URL.")
-                    if second_best_quality_url:
-                        print("Trying the second best quality...")
-                        line = second_best_quality_url
-                    else:
-                        print("No alternative URL available.")
-                        continue
-            except Exception as e:
-                print(f"An error occurred while processing the video: {e}")
-                continue
-    else:
-        print(f"Downloading video: {line}")
-        try:
-            highest_quality_url = scrape_video_page(line)
-            if highest_quality_url:
-                print(f"Starting download: {highest_quality_url}")
-                line = highest_quality_url
-            else:
-                print("Failed to get the highest quality video URL.")
-                if second_best_quality_url:
-                    print("Trying the second best quality...")
-                    line = second_best_quality_url
-                else:
-                    print("No alternative URL available.")
-                    continue
-        except Exception as e:
-            print(f"An error occurred while processing the video: {e}")
-            continue
-
-    # Download the video
-    try:
-        response = requests.get(line, stream=True)
-        total_size = int(response.headers.get('content-length', 0))
-        counter = 1
-        base_filename = os.path.basename(line)
-        video_filename = f'/content/downloads/{base_filename}.mp4'
-        if not os.path.exists(video_filename):
-            os.makedirs(os.path.dirname(video_filename), exist_ok=True)
-            with open(video_filename, 'wb') as f:
-                with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading video") as pbar:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                        pbar.update(len(chunk))
-        else:
-            print(f"File {video_filename} already exists.")
-    except Exception as e:
-        print(f"Failed to download: {e}")
-    
-    # Add the downloaded URL to already_dl.txt
-    with open(already_dl_path, 'a') as al_dl_file:
-        al_dl_file.write(line + '\n')
-
-# Run the main function to download and send files
-with app:
-    input_file_path = "input.txt"
-    destination_chat_id = "your_destination_chat_id"
-    app.run(main(input_file_path, destination_chat_id))
 import cloudscraper
 from bs4 import BeautifulSoup
 import time
@@ -305,7 +7,6 @@ import re
 import sys
 import platform
 import json
-
 
 filename = "input.txt"
 if len(sys.argv) > 1:
@@ -587,64 +288,70 @@ for line in lines:
     if match:
         genesisURL = url
         page_number = 1
-        last_part = url.rsplit('/', 1)[-1] # Check if the last part of url after the last forward slash is a number
+        last_part = url.rsplit('/', 1)[-1]
         if re.match(r"^\d+$", last_part):
-            page_number = int(last_part)  # set page_number to the number
+            page_number = int(last_part)
         while True:
             url = genesisURL + '/' + str(page_number)
             if not page_exists(url):
                 break
-            scraper = cloudscraper.create_scraper()  # returns a CloudScraper instance
-            html = scraper.get(url).text  # return html
+            scraper = cloudscraper.create_scraper()
+            html = scraper.get(url).text
             soup = BeautifulSoup(html, 'html.parser')
             title = soup.title.string if soup.title else None
             title = title.replace(' Playlist - HD Porn Videos - SpankBang', '')
             
             for char in illegal_chars:
                 title = title.replace(char, '-')
-            curator_span = soup.find('span', {'class': 'parent'})  # find span tag with class 'parent'. curator name is within a span
+            curator_span = soup.find('span', {'class': 'parent'})
             if curator_span is not None:
-                curator_link = curator_span.find('a')  # find a tag within that span
+                curator_link = curator_span.find('a')
                 if curator_link is not None:
-                    curator = curator_link.text  # get the text within the a tag
+                    curator = curator_link.text
                 for char in illegal_chars:
                     curator = curator.replace(char, '')
             else:
                 print('Curator not found')
                 curator = "Anon"
-
-            html_lines = html.split('\n') #split HTML into lines
             
-            html_filtered = [line for line in html_lines if "\" class=\"n\"" in line] #titles are included at this point
-            html_filtered = [line.replace('<a href="', '') for line in html_filtered] #remove <a href="
-            for i, line in enumerate(html_filtered):
-                html_filtered[i] = line.split('\" class=\"n\"', 1)[0]
-            html_filtered = ['https://spankbang.com' + line.replace(' ', '') for line in html_filtered]
-            # Write html_filtered lines to a txt file named after title
+            # New code to extract video URLs
+            video_items = soup.find_all('div', class_='video-item')
+            video_urls = []
+            for item in video_items:
+                a_tag = item.find('a', href=True)
+                if a_tag:
+                    relative_url = a_tag['href']
+                    full_url = 'https://spankbang.com' + relative_url
+                    video_urls.append(full_url)
+            
+            # Write video_urls to a txt file named after title
             with open(title + " - " + curator + '.txt', 'a') as f:
-                for line in html_filtered:
-                    f.write(line + '\n')
-            html_filtered = '\n'.join(html_filtered)
+                for url in video_urls:
+                    f.write(url + '\n')
+            
             print("Page " + str(page_number))
-            print(html_filtered)
-            if html_filtered == "":
-                page_number = page_number
+            print('\n'.join(video_urls))
+            
+            if not video_urls:
+                break
             else:
                 page_number += 1
-        time.sleep(1)
+            time.sleep(1)
+        
+        # Process the collected URLs
         with open(title + " - " + curator + '.txt', "r") as urls_file:
             urls_lines = urls_file.readlines()
         with open(title + " - " + curator + '.txt', "w") as urls_file:
             for i, url in enumerate(urls_lines):
                 print(str(i))
-                html = scraper.get(url.strip()).text #return html
+                html = scraper.get(url.strip()).text
                 soup = BeautifulSoup(html, 'html.parser')
-                og_url_tag = soup.select_one('meta[property="og:url"]') #find og:url
+                og_url_tag = soup.select_one('meta[property="og:url"]')
                 if og_url_tag is not None:
-                    og_url = og_url_tag['content'] # get the url from the content attribute
+                    og_url = og_url_tag['content']
                     print(og_url)
-                    urls_lines[i] = og_url + '\n' # replace the original url with og_url
-            urls_file.writelines(urls_lines)  # write all lines back to the file
+                    urls_lines[i] = og_url + '\n'
+            urls_file.writelines(urls_lines)
         continue
     
     for attempt in range(7):
